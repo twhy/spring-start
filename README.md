@@ -14,6 +14,10 @@ Run interactively:
 sprint
 ```
 
+When choosing dependencies interactively, entries that are incompatible with the
+selected Spring Boot version stay visible but are disabled with a message such
+as `Requires Spring Boot >= 4.0.0 and < 4.1.0-M1.`.
+
 Or generate a project with Spring Initializr-compatible arguments:
 
 ```bash

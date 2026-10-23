@@ -285,6 +285,38 @@ function isDependencyCompatibleWithBootVersion(
   );
 }
 
+function formatDependencyRequirement(range: string): string {
+  const trimmedRange = range.trim();
+
+  if (
+    trimmedRange.startsWith("[") ||
+    trimmedRange.startsWith("(") ||
+    trimmedRange.startsWith("]")
+  ) {
+    const lowerInclusive = trimmedRange.startsWith("[");
+    const upperInclusive = trimmedRange.endsWith("]");
+    const inner = trimmedRange.slice(1, -1);
+    const [lowerBoundRaw, upperBoundRaw] = inner.split(",");
+    const lowerBound = lowerBoundRaw?.trim();
+    const upperBound = upperBoundRaw?.trim();
+    const constraints: string[] = [];
+
+    if (lowerBound) {
+      constraints.push(`${lowerInclusive ? ">=" : ">"} ${lowerBound}`);
+    }
+
+    if (upperBound) {
+      constraints.push(`${upperInclusive ? "<=" : "<"} ${upperBound}`);
+    }
+
+    if (constraints.length > 0) {
+      return `Requires Spring Boot ${constraints.join(" and ")}.`;
+    }
+  }
+
+  return `Requires Spring Boot >= ${trimmedRange}.`;
+}
+
 function resolveDefaults(metadata: SpringMetadata): Pick<
   ProjectOptions,
   "type" | "language" | "packaging" | "bootVersion" | "javaVersion"
@@ -398,13 +430,29 @@ async function promptForDependencyIds(
   metadata: SpringMetadata,
   bootVersion: string,
 ): Promise<string[]> {
+  type DependencyEntryState = Dependency & {
+    disabledReason?: string;
+  };
+
   const dependencyGroups = metadata.dependencies?.values ?? [];
   const filteredGroups = dependencyGroups
     .map((group) => ({
       ...group,
-      values: group.values.filter((entry) =>
-        isDependencyCompatibleWithBootVersion(entry, bootVersion),
-      ),
+      values: group.values.map((entry) => {
+        const compatible = isDependencyCompatibleWithBootVersion(
+          entry,
+          bootVersion,
+        );
+
+        return compatible
+          ? entry
+          : {
+              ...entry,
+              disabledReason: formatDependencyRequirement(
+                entry.versionRange ?? "",
+              ),
+            };
+      }),
     }))
     .filter((group) => group.values.length > 0);
 
@@ -422,6 +470,10 @@ async function promptForDependencyIds(
         name: entry.name,
         value: entry.id,
         description: entry.description,
+        disabled:
+          "disabledReason" in entry && entry.disabledReason
+            ? entry.disabledReason
+            : undefined,
       })),
     );
 
@@ -472,20 +524,42 @@ async function promptForDependencyIds(
 
     group.values.forEach((entry, index) => {
       const isActive = index === currentItemIndex;
+      const disabledReason =
+        "disabledReason" in entry ? entry.disabledReason : undefined;
+      const isDisabled = Boolean(disabledReason);
       const isSelected = selected.has(entry.id);
-      const marker = isSelected ? pc.green("◉") : isActive ? pc.cyan("◌") : "○";
+      const marker = isSelected
+        ? pc.green("◉")
+        : isDisabled
+          ? pc.dim("◌")
+          : isActive
+            ? pc.cyan("◌")
+            : "○";
       const prefix = isActive ? pc.green("▶") : " ";
-      const label = isSelected ? pc.green(entry.name) : entry.name;
+      const label = isDisabled
+        ? pc.dim(entry.name)
+        : isSelected
+          ? pc.green(entry.name)
+          : entry.name;
+      const requirement = disabledReason
+        ? pc.dim(` — ${disabledReason}`)
+        : "";
       const description = entry.description
         ? pc.dim(` — ${entry.description}`)
         : "";
-      stdout.write(`${prefix} ${marker} ${label}${description}\n`);
+      stdout.write(`${prefix} ${marker} ${label}${description}${requirement}\n`);
     });
   };
 
   const toggleCurrent = () => {
     const currentGroup = filteredGroups[currentGroupIndex]!;
-    const currentEntry = currentGroup.values[currentItemIndex]!;
+    const currentEntry = currentGroup.values[currentItemIndex] as
+      | DependencyEntryState
+      | undefined;
+
+    if (!currentEntry || currentEntry.disabledReason) {
+      return;
+    }
 
     if (selected.has(currentEntry.id)) {
       selected.delete(currentEntry.id);
@@ -750,7 +824,6 @@ async function generateProjectArchive(options: ProjectOptions): Promise<void> {
   }
 
   console.log(`Created Spring project at ${projectDir}`);
-  console.log(`Starter URL: ${starterUrl}`);
 }
 
 async function printCapabilities(metadata: SpringMetadata): Promise<void> {
