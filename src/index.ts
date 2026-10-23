@@ -848,6 +848,48 @@ async function printCapabilities(metadata: SpringMetadata): Promise<void> {
   }
 }
 
+function printSelectedOptions(
+  metadata: SpringMetadata,
+  options: ProjectOptions,
+  projectDir: string,
+): void {
+  const dependencyNameById = new Map<string, string>();
+
+  for (const group of metadata.dependencies?.values ?? []) {
+    for (const dependency of group.values) {
+      dependencyNameById.set(dependency.id, dependency.name);
+    }
+  }
+
+  const dependencySummary =
+    options.dependencies.length > 0
+      ? options.dependencies
+          .map((dependencyId) => {
+            const dependencyName = dependencyNameById.get(dependencyId);
+            return dependencyName
+              ? `${dependencyName} (${dependencyId})`
+              : dependencyId;
+          })
+          .join(", ")
+      : "(none)";
+
+  console.log("Selected options:");
+  console.log(`  Project type: ${options.type}`);
+  console.log(`  Language: ${options.language}`);
+  console.log(`  Spring Boot: ${options.bootVersion}`);
+  console.log(`  Group: ${options.groupId}`);
+  console.log(`  Artifact: ${options.artifactId}`);
+  console.log(`  Name: ${options.name}`);
+  console.log(`  Description: ${options.description}`);
+  console.log(`  Package name: ${options.packageName}`);
+  console.log(`  Packaging: ${options.packaging}`);
+  console.log(`  Java version: ${options.javaVersion}`);
+  console.log(`  Version: ${options.version}`);
+  console.log(`  Dependencies: ${dependencySummary}`);
+  console.log(`  Output directory: ${projectDir}`);
+  console.log("");
+}
+
 async function runNewCommand(
   location: string | undefined,
   opts: CliOptions,
@@ -922,6 +964,8 @@ async function runNewCommand(
   if (opts.force) {
     resolvedOptions.dependencies = resolvedOptions.dependencies;
   }
+
+  printSelectedOptions(metadata, resolvedOptions, projectDir);
 
   const confirmed = await confirm({
     message: `Create project "${resolvedOptions.artifactId}" in ${process.cwd()}?`,
