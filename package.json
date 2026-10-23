@@ -1,0 +1,24 @@
+{
+  "name": "sprint",
+  "version": "0.1.0",
+  "module": "src/index.ts",
+  "type": "module",
+  "bin": {
+    "sprint": "./src/index.ts"
+  },
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "typecheck": "bun check"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^7"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^8.7.4",
+    "cac": "^7.1.0",
+    "picocolors": "^1.1.1"
+  }
+}
