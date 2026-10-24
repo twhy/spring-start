@@ -1,5 +1,5 @@
 {
-  "name": "sprints",
+  "name": "spring-start",
   "version": "0.1.0",
   "description": "Generate Spring Boot projects from start.spring.io",
   "license": "MIT",
