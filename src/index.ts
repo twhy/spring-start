@@ -915,7 +915,6 @@ async function runNewCommand(
   }
 
   const shouldPrompt =
-    !location &&
     !opts.name &&
     !opts.artifactId &&
     !opts.bootVersion &&
