@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import readline, { createInterface } from "node:readline";
 import { basename, join } from "node:path";
 import { cac } from "cac";
@@ -166,6 +166,7 @@ function derivePackageName(groupId: string, artifactId: string): string {
 function printHelp(): void {
   console.log(`Usage:
   sprint new [options] [location]
+  sprint version
   sprint --help
 
 Spring init-compatible options:
@@ -188,6 +189,18 @@ Spring init-compatible options:
   -v, --version <String>       Project version
   -x, --extract                Extract the project archive
 `);
+}
+
+function getCliVersion(): string {
+  const packageJsonPath = new URL("../package.json", import.meta.url);
+  const packageJsonRaw = readFileSync(packageJsonPath, "utf8");
+  const packageJson = JSON.parse(packageJsonRaw) as { version?: string };
+
+  if (!packageJson.version) {
+    throw new Error('Missing "version" in package.json');
+  }
+
+  return `Sprint v${packageJson.version}`;
 }
 
 async function fetchSpringMetadata(): Promise<SpringMetadata> {
@@ -1013,6 +1026,10 @@ cli
   .action(async (location: string | undefined, options: CliOptions) => {
     await runNewCommand(location, options);
   });
+
+cli.command("version", "Show sprint CLI version").action(() => {
+  console.log(getCliVersion());
+});
 
 const args = process.argv.slice(2);
 

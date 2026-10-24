@@ -41,3 +41,9 @@ Type check:
 ```bash
 bun check
 ```
+
+Show CLI version:
+
+```bash
+sprint version
+```
