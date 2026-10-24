@@ -1,11 +1,17 @@
 #!/usr/bin/env bun
 
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import readline, { createInterface } from "node:readline";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { basename, join } from "node:path";
-import { cac } from "cac";
-import pc from "picocolors";
+import readline, { createInterface } from "node:readline";
 import { checkbox, confirm, input, select } from "@inquirer/prompts";
+import { cac } from "cac";
+import colors from "picocolors";
 
 const SPRING_START_ZIP_URL = "https://start.spring.io/starter.zip";
 const SPRING_START_METADATA_CLIENT_URL =
@@ -508,17 +514,17 @@ async function promptForDependencyIds(
 
     if (mode === "groups") {
       filteredGroups.forEach((group, index) => {
-        const prefix = index === currentGroupIndex ? pc.green("▶") : " ";
+        const prefix = index === currentGroupIndex ? colors.green("▶") : " ";
         const currentSelections = group.values
           .filter((entry) => selected.has(entry.id))
-          .map((entry) => pc.green(entry.name))
+          .map((entry) => colors.green(entry.name))
           .join(", ");
         stdout.write(
           `${prefix} ${group.name}${currentSelections ? `  (${currentSelections})` : ""}\n`,
         );
       });
       stdout.write(
-        `\n${pc.dim("Right arrow / Enter: open group  •  d / Ctrl+D: done  •  ↑/↓: move")}\n`,
+        `\n${colors.dim("Right arrow / Enter: open group  •  d / Ctrl+D: done  •  ↑/↓: move")}\n`,
       );
       return;
     }
@@ -526,13 +532,13 @@ async function promptForDependencyIds(
     const group = filteredGroups[currentGroupIndex]!;
     const selectedNames = group.values
       .filter((entry) => selected.has(entry.id))
-      .map((entry) => pc.green(entry.name));
+      .map((entry) => colors.green(entry.name));
 
     stdout.write(
       `${group.name}${selectedNames.length ? `  (${selectedNames.join(", ")})` : ""}\n\n`,
     );
     stdout.write(
-      `${pc.dim("Left arrow / Esc: back  •  Space: toggle  •  d / Ctrl+D: done  •  Enter: keep browsing")}\n\n`,
+      `${colors.dim("Left arrow / Esc: back  •  Space: toggle  •  d / Ctrl+D: done  •  Enter: keep browsing")}\n\n`,
     );
 
     group.values.forEach((entry, index) => {
@@ -542,33 +548,32 @@ async function promptForDependencyIds(
       const isDisabled = Boolean(disabledReason);
       const isSelected = selected.has(entry.id);
       const marker = isSelected
-        ? pc.green("◉")
+        ? colors.green("◉")
         : isDisabled
-          ? pc.dim("◌")
+          ? colors.dim("◌")
           : isActive
-            ? pc.cyan("◌")
+            ? colors.cyan("◌")
             : "○";
-      const prefix = isActive ? pc.green("▶") : " ";
+      const prefix = isActive ? colors.green("▶") : " ";
       const label = isDisabled
-        ? pc.dim(entry.name)
+        ? colors.dim(entry.name)
         : isSelected
-          ? pc.green(entry.name)
+          ? colors.green(entry.name)
           : entry.name;
-      const requirement = disabledReason
-        ? pc.dim(` — ${disabledReason}`)
-        : "";
+      const requirement = disabledReason ? colors.dim(` — ${disabledReason}`) : "";
       const description = entry.description
-        ? pc.dim(` — ${entry.description}`)
+        ? colors.dim(` — ${entry.description}`)
         : "";
-      stdout.write(`${prefix} ${marker} ${label}${description}${requirement}\n`);
+      stdout.write(
+        `${prefix} ${marker} ${label}${description}${requirement}\n`,
+      );
     });
   };
 
   const toggleCurrent = () => {
     const currentGroup = filteredGroups[currentGroupIndex]!;
     const currentEntry = currentGroup.values[currentItemIndex] as
-      | DependencyEntryState
-      | undefined;
+      DependencyEntryState | undefined;
 
     if (!currentEntry || currentEntry.disabledReason) {
       return;
