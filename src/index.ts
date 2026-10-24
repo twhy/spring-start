@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 
 import {
   existsSync,
@@ -10,8 +10,9 @@ import {
 import { basename, join } from "node:path";
 import readline, { createInterface } from "node:readline";
 import { checkbox, confirm, input, select } from "@inquirer/prompts";
-import { cac } from "cac";
 import colors from "picocolors";
+import AdmZip from "adm-zip";
+import { cac } from "cac";
 
 const SPRING_START_ZIP_URL = "https://start.spring.io/starter.zip";
 const SPRING_START_METADATA_CLIENT_URL =
@@ -801,7 +802,6 @@ async function fetchProjectArchive(options: ProjectOptions): Promise<Response> {
 }
 
 async function generateProjectArchive(options: ProjectOptions): Promise<void> {
-  const starterUrl = buildStarterUrl(options);
   const response = await fetchProjectArchive(options);
 
   const projectDir = join(process.cwd(), options.artifactId);
@@ -824,21 +824,16 @@ async function generateProjectArchive(options: ProjectOptions): Promise<void> {
   mkdirSync(projectDir, { recursive: true });
   writeFileSync(zipPath, zipBuffer);
 
-  const unzip = Bun.spawn(["unzip", "-q", "-o", zipPath, "-d", projectDir], {
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-
-  const exitCode = await unzip.exited;
-  const errorOutput = await new Response(unzip.stderr).text();
-
-  rmSync(zipPath, { force: true });
-
-  if (exitCode !== 0) {
+  try {
+    const zip = new AdmZip(zipPath);
+    zip.extractAllTo(projectDir, true);
+    rmSync(zipPath, { force: true });
+  } catch (error) {
+    rmSync(zipPath, { force: true });
     rmSync(projectDir, { recursive: true, force: true });
-    throw new Error(
-      `Unable to unpack the project archive: ${errorOutput || "unknown error"}`,
-    );
+    const message =
+      error instanceof Error ? error.message : "unknown error";
+    throw new Error(`Unable to unpack the project archive: ${message}`);
   }
 
   console.log(`Created Spring project at ${projectDir}`);

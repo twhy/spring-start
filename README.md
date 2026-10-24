@@ -2,10 +2,16 @@
 
 A small CLI for generating Spring Boot projects from the live metadata served by start.spring.io.
 
-Install dependencies:
+Install globally:
 
 ```bash
-bun install
+npm install -g sprint
+```
+
+Or run without installing:
+
+```bash
+npx sprint new demo-app --build maven --language java --dependencies web,data-jpa --java-version 17 --force
 ```
 
 Run interactively:
@@ -18,7 +24,7 @@ When choosing dependencies interactively, entries that are incompatible with the
 selected Spring Boot version stay visible but are disabled with a message such
 as `Requires Spring Boot >= 4.0.0 and < 4.1.0-M1.`.
 
-Or generate a project with Spring Initializr-compatible arguments:
+Generate a project with Spring Initializr-compatible arguments:
 
 ```bash
 sprint new demo-app --build maven --language java --dependencies web,data-jpa --java-version 17 --force
@@ -30,16 +36,18 @@ Equivalent short forms are supported:
 sprint new demo-app -d web,data-jpa -l java -j 17 -f
 ```
 
-You can also run the script directly:
+You can also run the built CLI directly from a checkout:
 
 ```bash
-bun run src/index.ts new demo-app --dependencies web,data-jpa --force
+npm install
+npm run build
+node dist/index.js new demo-app --dependencies web,data-jpa --force
 ```
 
 Type check:
 
 ```bash
-bun check
+npm run typecheck
 ```
 
 Show CLI version:
