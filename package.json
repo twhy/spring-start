@@ -1,6 +1,6 @@
 {
   "name": "spring-start",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Generate Spring Boot projects from start.spring.io",
   "license": "MIT",
   "type": "module",
