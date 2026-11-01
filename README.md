@@ -1,11 +1,14 @@
 # sprint
 
+Package: `spring-start`  
+Command: `sprint`
+
 A small CLI for generating Spring Boot projects from the live metadata served by start.spring.io.
 
 Install globally:
 
 ```bash
-npm install -g sprint
+npm install -g spring-start
 ```
 
 Or run without installing:
